@@ -46,6 +46,8 @@ func main() {
 		Transport: &h2quic.RoundTripper{QuicConfig: quicConfig},
 	}
 
+    utils.Infof("Bo: multipath enabled? %t", *multipath)
+
 	var wg sync.WaitGroup
 	wg.Add(len(urls))
 	for _, addr := range urls {

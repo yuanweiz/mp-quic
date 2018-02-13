@@ -135,6 +135,7 @@ func main() {
 
 	http.Handle("/", http.FileServer(http.Dir(*www)))
 
+    fmt.Printf("sizeof bs=%d",len(bs));
 	if len(bs) == 0 {
 		bs = binds{"0.0.0.0:6121"}
 	}

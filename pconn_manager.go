@@ -5,7 +5,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-
+    "runtime/debug"
+    //"runtime"
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/utils"
 	// reuse "github.com/jbenet/go-reuseport"
@@ -40,6 +41,8 @@ type pconnManager struct {
 
 // Setup the pconn_manager and the pconnAny connection
 func (pcm *pconnManager) setup(pconnArg net.PacketConn, listenAddr net.Addr) error {
+    utils.Infof("setup() traceback");
+    debug.PrintStack();
 	pcm.pconns = make(map[string]net.PacketConn)
 	pcm.localAddrs = make([]net.UDPAddr, 0)
 	pcm.rcvRawPackets = make(chan *receivedRawPacket)
@@ -72,10 +75,11 @@ func (pcm *pconnManager) setup(pconnArg net.PacketConn, listenAddr net.Addr) err
 	}
 
 	if utils.Debug() {
-		utils.Debugf("Created pconn_manager, any on %s", pcm.pconnAny.LocalAddr().String())
+		utils.Infof("Created pconn_manager, any on %s", pcm.pconnAny.LocalAddr().String())
 	}
 
 	// Run the pconnManager
+    //runtime.Breakpoint();
 	go pcm.run()
 
 	return nil
@@ -131,7 +135,10 @@ func (pcm *pconnManager) run() {
 	// FIXME Server starting on any vs. server with non-any address
 	if pcm.perspective == protocol.PerspectiveClient {
 		pcm.createPconns()
-	}
+	}else {
+        utils.Infof("Server calls pconnManager.run(), traceback:");
+        debug.PrintStack();
+    }
 
 	select {
 	case pcm.changePaths <- struct{}{}:
@@ -198,11 +205,22 @@ func (pcm *pconnManager) createPconns() error {
 	if err != nil {
 		return err
 	}
+    utils.Infof("calling createPconn()");
+    debug.PrintStack();
 	for _, i := range ifaces {
 		// TODO (QDC): do this in a generic way
+
+
+        // Bo: replace interface validation
+		if !strings.Contains(i.Name, "ens") && !strings.Contains(i.Name, "eth") && !strings.Contains(i.Name, "rmnet") && !strings.Contains(i.Name, "wlan") {
+			continue
+		}
+        utils.Infof("Bo: pconn_manager.go: Detected Interface %s !", i.Name)
+        /*
 		if !strings.Contains(i.Name, "eth") && !strings.Contains(i.Name, "rmnet") && !strings.Contains(i.Name, "wlan") {
 			continue
 		}
+        */
 		addrs, err := i.Addrs()
 		if err != nil {
 			return err
@@ -222,10 +240,12 @@ func (pcm *pconnManager) createPconns() error {
 			for _, locAddr := range pcm.localAddrs {
 				if ip.Equal(locAddr.IP) {
 					found = true
+                    utils.Infof("found equal:%s",ip.String());
 					break lookingLoop
 				}
 			}
 			if !found {
+                utils.Infof("Not found");
 				locAddr, err := pcm.createPconn(ip)
 				if err != nil {
 					return err

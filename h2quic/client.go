@@ -18,6 +18,8 @@ import (
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/utils"
 	"github.com/lucas-clemente/quic-go/qerr"
+    "runtime/debug"
+    "io/ioutil"
 )
 
 type roundTripperOpts struct {
@@ -148,6 +150,8 @@ func (c *client) handleHeaderStream() {
 // Roundtrip executes a request and returns a response
 func (c *client) RoundTrip(req *http.Request) (*http.Response, error) {
 	// TODO: add port to address, if it doesn't have one
+    fmt.Println("Roundtrip()");
+    debug.PrintStack();
 	if req.URL.Scheme != "https" {
 		return nil, errors.New("quic http2: unsupported scheme")
 	}
@@ -242,6 +246,8 @@ func (c *client) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	res.Request = req
+    bytes,err :=ioutil.ReadAll(res.Body);
+    fmt.Println(string(bytes));
 	return res, nil
 }
 

@@ -62,8 +62,11 @@ func (pm *pathManager) setup(conn connection) {
 	pm.sess.paths[protocol.InitialPathID].setup(pm.oliaSenders)
 
 	// With the initial path, get the remoteAddr to create paths accordingly
-	if conn.RemoteAddr() != nil {
-		remAddr, err := net.ResolveUDPAddr("udp", conn.RemoteAddr().String())
+    var hardCodedRemoteAddrs [2] string
+    hardCodedRemoteAddrs[0]="10.0.2.1:6060";
+    hardCodedRemoteAddrs[1]="10.0.3.1:6060";
+    for _, remoteAddrStr := range hardCodedRemoteAddrs{
+		remAddr, err := net.ResolveUDPAddr("udp", remoteAddrStr)
 		if err != nil {
 			utils.Errorf("path manager: encountered error while parsing remote addr: %v", remAddr)
 		}
@@ -73,7 +76,22 @@ func (pm *pathManager) setup(conn connection) {
 		} else {
 			pm.remoteAddrs6 = append(pm.remoteAddrs6, *remAddr)
 		}
-	}
+    }
+    if len(pm.remoteAddrs4) != 2 {
+        panic("length");
+    }
+	//if conn.RemoteAddr() != nil {
+	//	remAddr, err := net.ResolveUDPAddr("udp", conn.RemoteAddr().String())
+	//	if err != nil {
+	//		utils.Errorf("path manager: encountered error while parsing remote addr: %v", remAddr)
+	//	}
+
+	//	if remAddr.IP.To4() != nil {
+	//		pm.remoteAddrs4 = append(pm.remoteAddrs4, *remAddr)
+	//	} else {
+	//		pm.remoteAddrs6 = append(pm.remoteAddrs6, *remAddr)
+	//	}
+	//}
 
 	// Launch the path manager
 	go pm.run()
